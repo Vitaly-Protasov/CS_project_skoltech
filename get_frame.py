@@ -10,7 +10,8 @@ def get_frame(path):
                'Std gun hit distance', 'Avg time btw knife fires', 'Std time btw knife fires', 'Avg knife hit distance',
                'Std knife hit distance','Kills', 'Deaths', 'Assists', 'KD Ratio', 'KDA Ratio', 'Team velocity', 'Gun fire freq', 
                'Grenade fire freq', 'Knife fire freq', 'Jumps freq', 'ADR', 'Headshot',
-               'Smoke coords', 'Molotov coords', 'Flash blinded', 'Flash killed', 'Entry frag', 'Vest', 'Vesthelm', 'Wounded']
+               'Smoke coords', 'Smoke_ticks', 'Molotov coords', 'Flash blinded', 'Flash killed', 'Entry frag', 'Vest', 'Vesthelm', 'Wounded',
+               'Distance between killer']
 
     data = []
 
@@ -49,6 +50,7 @@ def get_frame(path):
                     assists_round = 0.
                     hs = 0.
                     smoke_coords = []
+                    smoke_ticks = []
                     molotov_coords = []
                     flash_blinded = []
                     flash_killed = []
@@ -96,6 +98,8 @@ def get_frame(path):
                         dmg_health = stats[round_num]['players'][player_id]['dmg_health'] / float(stats[round_num]['round_len'])
                     if 'smoke_coords' in stats[round_num]['players'][player_id].keys():
                         smoke_coords = stats[round_num]['players'][player_id]['smoke_coords']
+                    if 'smoke_ticks' in stats[round_num]['players'][player_id].keys():
+                        smoke_ticks = stats[round_num]['players'][player_id]['smoke_ticks']
 
                     if 'molotov_coords' in stats[round_num]['players'][player_id].keys():
                         molotov_coords = stats[round_num]['players'][player_id]['molotov_coords']
@@ -129,13 +133,15 @@ def get_frame(path):
 
 
                     side = stats[round_num]['players'][player_id]['side']
+                    dist_btw_killer = stats[round_num]['players'][player_id]['distance between killer']
+                    
                     row = [player_id, side, round_num, round_len, gun_shot_accuracy, knife_shot_accuracy, items_num, playtime, 
                            steps_num, distance, avg_gun_fire_time, std_gun_fire_time, avg_gun_hit_dist, std_gun_hit_dist,
                            avg_knife_fire_time, std_knife_fire_time, avg_knife_hit_dist, std_knife_hit_dist, kills_round, 
                            deaths_round, assists_round, kd, kda, velocity, gun_fire_freq, grenade_fire_freq, 
                            knife_fire_freq, jumps_freq, dmg_health, hs,
-                            smoke_coords, molotov_coords, flash_blinded, 
-                           flash_killed, entry_frag, vest, vesthelm, wounded]
+                            smoke_coords,smoke_ticks, molotov_coords, flash_blinded, 
+                           flash_killed, entry_frag, vest, vesthelm, wounded, dist_btw_killer]
 
                     data.append(dict(zip(columns, row)))
 

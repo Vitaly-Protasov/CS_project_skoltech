@@ -9,9 +9,9 @@ def fill_dict(round_len):
                                  'jumps': 0, 'gun_weapon_fire': 0,  'gun_weapon_fire_ticks': [], 'grenade_weapon_fire': 0, 
                                  'knife_weapon_fire': 0,  'knife_weapon_fire_ticks': [],
                                  'gun_hit': 0, 'gun_hit_distance': [], 'knife_hit': 0, 'knife_hit_distance': [], 
-                                 'dmg_health': 0, 'item_pickup': 0, 'side': str(), 'smoke_coords': [], 
+                                 'dmg_health': 0, 'item_pickup': 0, 'side': str(), 'smoke_coords': [], 'smoke_ticks': [],
                                  'molotov_coords': [], 'flash_blinded': [], 'flashed_to_kill': [],
-                                 'entry_frag': False, 'vest': 0, 'vesthelm': 0, 'wounded': 0}
+                                 'entry_frag': False, 'vest': 0, 'vesthelm': 0, 'wounded': 0, 'distance between killer': 0}
     return d
    
 def rounds_start_end(df, start, end):
@@ -24,6 +24,16 @@ def rounds_start_end(df, start, end):
             start_end_indices.append((start_idx, df_tmp[df_tmp['event'] == start].index[-1], end_idx))
         start_idx = end_idx
     return start_end_indices
+    
+def find_distance(killer, victim):
+    import numpy as np
+    
+    killer = np.array(list(map(float, killer.split(','))))
+    victim = np.array(list(map(float, victim.split(','))))
+    
+    sub = np.subtract(killer, victim)
+    distance  = np.sum([i*i for i in sub]) / 10**5
+    return distance
 
 def get_round_stat(df):
     rounds = []
@@ -40,10 +50,12 @@ def get_round_stat(df):
         df_round_player_death = df_round[df_round['event'] == 'player_death']
         for item in df_round_player_death['parameters']:
             item_d = ast.literal_eval(item) 
-            user = item_d['userid'].split(' (id:')[0]
-            attacker = item_d['attacker'].split(' (id:')[0]
-            assister = item_d['assister'].split(' (id:')[0]
+            user = item_d['userid'].split()[0]
+            attacker = item_d['attacker'].split()[0]
+            assister = item_d['assister'].split()[0]
             headshot = item_d['headshot']
+            distance_between_2 = find_distance(item_d['attacker position'], item_d['userid position'])
+            
             if user not in players:
                 players[user] = fill_dict(round_len)
             if attacker not in players:
@@ -55,6 +67,8 @@ def get_round_stat(df):
             players[user]['was_killed_by'].add(attacker)
             players[user]['playtime'] = df_round_player_death[df_round_player_death['parameters'] == item]['tick'].values[0] - df_round['tick'].iloc[0]
             players[attacker]['killed'].add(user)
+            players[user]['distance between killer'] += distance_between_2
+            
             if headshot != '0':
                 players[attacker]['headshot'] += 1
             if assister != '0':
@@ -181,6 +195,7 @@ def get_round_stat(df):
                 players[user] = fill_dict(round_len)
             
             players[user]['smoke_coords'].append(np.array([float(item_d['x']), float(item_d['y']), float(item_d['z'])]))
+            players[user]['smoke_ticks'].append(tick)
 
             if 'userid team' in item_d.keys():
                 user_side = item_d['userid team']
@@ -296,3 +311,53 @@ def kills_deaths_assists_per_round(stats, player, round_num):
         hs = player_info['headshot']
 
     return kills, deaths, assists, hs
+    
+def average_distance_btw_team(df_round):
+    to_go_through = df_round['players']
+    
+    keys = to_go_through.keys()
+    
+    avg_dist_T = 0
+    avg_dist_CT = 0
+    steps_T = []
+    steps_CT = []
+    min_len_T = 1580
+    min_len_CT = 1580
+    
+    for i in list(keys):
+        side_check = to_go_through[i]['side']
+        
+        if side_check == 'CT':
+            step_CT_player = to_go_through[i]['step position']
+            
+            if len(step_CT_player) < min_len_CT:
+                min_len_CT = len(step_CT_player)    
+                
+            steps_CT.append([step_CT_player])
+        else:
+            step_T_player = to_go_through[i]['step position']
+            
+            if len(step_T_player) < min_len_T:
+                min_len_T = len(step_T_player)  
+            
+            steps_T.append([step_T_player])
+    
+    
+    distance_matrix = np.zeros([min_len_T,3])
+    
+    for dist_each_player in steps_T:
+        j = 0 
+        for each_step in (dist_each_player[0][:min_len_T]):
+            
+            if j <= 5:
+                arra = [i for i in each_step]
+                distance_matrix[j, 0] += arra[0]
+                distance_matrix[j, 1] += arra[1]
+                distance_matrix[j, 2] += arra[2]
+                j += 1
+            else:
+                break
+        
+    
+    return distance_matrix
+        
