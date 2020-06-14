@@ -10,8 +10,8 @@ def get_frame(path):
                'Std gun hit distance', 'Avg time btw knife fires', 'Std time btw knife fires', 'Avg knife hit distance',
                'Std knife hit distance','Kills', 'Deaths', 'Assists', 'KD Ratio', 'KDA Ratio', 'Team velocity', 'Gun fire freq', 
                'Grenade fire freq', 'Knife fire freq', 'Jumps freq', 'ADR', 'Headshot',
-               'Smoke coords', 'Smoke_ticks', 'Molotov coords', 'Flash blinded', 'Flash killed', 'Entry frag', 'Vest', 'Vesthelm', 'Wounded',
-               'Distance between killer']
+               'Smoke coords', 'Smoke_ticks', 'Molotov coords', 'Flash blinded', 'Flash killed', 'Entry frag', 'Vest', 'Vesthelm',
+               'Wounded', 'Distance between killer', 'Average change in step']
 
     data = []
 
@@ -129,8 +129,8 @@ def get_frame(path):
                     else:
                         kd = kills_round 
                     kda = (kills_round + assists_round) / max(1., deaths_round)
-
-
+                    
+                    avg_change_in_step = average_change_in_step(stats[round_num]['players'][player_id])
 
                     side = stats[round_num]['players'][player_id]['side']
                     dist_btw_killer = stats[round_num]['players'][player_id]['distance between killer']
@@ -141,7 +141,7 @@ def get_frame(path):
                            deaths_round, assists_round, kd, kda, velocity, gun_fire_freq, grenade_fire_freq, 
                            knife_fire_freq, jumps_freq, dmg_health, hs,
                             smoke_coords,smoke_ticks, molotov_coords, flash_blinded, 
-                           flash_killed, entry_frag, vest, vesthelm, wounded, dist_btw_killer]
+                           flash_killed, entry_frag, vest, vesthelm, wounded, dist_btw_killer, avg_change_in_step]
 
                     data.append(dict(zip(columns, row)))
 

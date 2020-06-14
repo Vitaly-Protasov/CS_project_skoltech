@@ -11,7 +11,8 @@ def fill_dict(round_len):
                                  'gun_hit': 0, 'gun_hit_distance': [], 'knife_hit': 0, 'knife_hit_distance': [], 
                                  'dmg_health': 0, 'item_pickup': 0, 'side': str(), 'smoke_coords': [], 'smoke_ticks': [],
                                  'molotov_coords': [], 'flash_blinded': [], 'flashed_to_kill': [],
-                                 'entry_frag': False, 'vest': 0, 'vesthelm': 0, 'wounded': 0, 'distance between killer': 0}
+                                 'entry_frag': False, 'vest': 0, 'vesthelm': 0, 'wounded': 0, 'distance between killer': 0,
+                                 'average change in step': 0}
     return d
    
 def rounds_start_end(df, start, end):
@@ -32,8 +33,18 @@ def find_distance(killer, victim):
     victim = np.array(list(map(float, victim.split(','))))
     
     sub = np.subtract(killer, victim)
-    distance  = np.sum([i*i for i in sub]) / 10**5
+    distance  = np.sqrt(np.sum([i*i for i in sub]))
     return distance
+
+def average_change_in_step(player):
+    average_length = 0
+    steps = player['step position']
+    
+    for i in range(len(steps[:len(steps) - 1])):
+        sub = np.subtract(steps[i], steps[i + 1])
+        average_length += np.sqrt(np.sum([j*j for j in sub]))
+    return average_length
+    
 
 def get_round_stat(df):
     rounds = []
@@ -69,6 +80,7 @@ def get_round_stat(df):
             players[attacker]['killed'].add(user)
             players[user]['distance between killer'] += distance_between_2
             
+            
             if headshot != '0':
                 players[attacker]['headshot'] += 1
             if assister != '0':
@@ -101,6 +113,9 @@ def get_round_stat(df):
             players[user]['footsteps'] += 1
             if 'userid position' in item_d.keys():
                 players[user]['step position'].append(np.array(list(map(float, item_d['userid position'].split(', ')))))
+                #avrg_change_step = average_change_in_step(players[user])
+                #players[user]['average change in step'] += avrg_change_step
+                
             
             if 'userid team' in item_d.keys():
                 user_side = item_d['userid team']
